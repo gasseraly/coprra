@@ -2,6 +2,7 @@
 -- قاعدة بيانات CopRRA الشاملة والمحدثة
 -- نسخة كاملة تتضمن جميع الميزات والأجزاء الديناميكية
 -- تاريخ الإنشاء: 2025-01-27
+-- محدثة بناءً على محادثة DeepSeek الكاملة
 -- ===================================
 
 SET NAMES utf8mb4;
@@ -18,7 +19,7 @@ USE `coprra_db`;
 -- 1. الجداول الأساسية للنظام
 -- ===================================
 
--- جدول اللغات المدعومة
+-- جدول اللغات المدعومة (أكبر 15 لغة عالمية)
 CREATE TABLE `languages` (
     `id` int NOT NULL AUTO_INCREMENT,
     `code` varchar(10) NOT NULL,
@@ -107,6 +108,8 @@ CREATE TABLE `users` (
     `social_login_id` varchar(100),
     `notification_preferences` json,
     `privacy_settings` json,
+    `loyalty_points` int DEFAULT 0,
+    `membership_level` enum('bronze', 'silver', 'gold', 'platinum') DEFAULT 'bronze',
     `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -114,6 +117,7 @@ CREATE TABLE `users` (
     KEY `idx_username` (`username`),
     KEY `idx_role` (`role`),
     KEY `idx_active` (`is_active`),
+    KEY `idx_membership` (`membership_level`),
     KEY `fk_user_language` (`preferred_language_id`),
     KEY `fk_user_currency` (`preferred_currency_id`),
     KEY `fk_user_region` (`region_id`),
@@ -159,6 +163,24 @@ CREATE TABLE `user_activity_log` (
     KEY `idx_action` (`action`),
     KEY `idx_created_at` (`created_at`),
     CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول نظام النقاط والمكافآت
+CREATE TABLE `loyalty_points_history` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `points` int NOT NULL,
+    `transaction_type` enum('earned', 'redeemed', 'expired', 'bonus') NOT NULL,
+    `reason` varchar(255),
+    `reference_type` varchar(50), -- review, purchase, referral, etc.
+    `reference_id` int,
+    `expires_at` timestamp NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_transaction_type` (`transaction_type`),
+    KEY `idx_created_at` (`created_at`),
+    CONSTRAINT `fk_loyalty_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===================================
@@ -263,6 +285,33 @@ CREATE TABLE `stores` (
     CONSTRAINT `fk_store_language` FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول Store Locator - تحديد المتاجر القريبة
+CREATE TABLE `store_locations` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `store_id` int NOT NULL,
+    `branch_name` varchar(255),
+    `address` text NOT NULL,
+    `city` varchar(100) NOT NULL,
+    `state` varchar(100),
+    `country` varchar(100) NOT NULL,
+    `postal_code` varchar(20),
+    `latitude` decimal(10,8),
+    `longitude` decimal(11,8),
+    `phone` varchar(20),
+    `email` varchar(255),
+    `opening_hours` json,
+    `services_available` json,
+    `is_active` boolean DEFAULT TRUE,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_store_id` (`store_id`),
+    KEY `idx_location` (`latitude`, `longitude`),
+    KEY `idx_city` (`city`, `country`),
+    KEY `idx_active` (`is_active`),
+    CONSTRAINT `fk_location_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
 -- 5. المنتجات والمواصفات
 -- ===================================
@@ -303,11 +352,13 @@ CREATE TABLE `products` (
     `total_wishlists` int DEFAULT 0,
     `total_comparisons` int DEFAULT 0,
     `popularity_score` int DEFAULT 0,
+    `view_count` int DEFAULT 0,
     `availability_status` enum('available', 'out_of_stock', 'discontinued', 'coming_soon') DEFAULT 'available',
     `release_date` date,
     `is_featured` boolean DEFAULT FALSE,
     `is_trending` boolean DEFAULT FALSE,
     `is_deal` boolean DEFAULT FALSE,
+    `is_seasonal` boolean DEFAULT FALSE,
     `is_active` boolean DEFAULT TRUE,
     `meta_title_en` varchar(255),
     `meta_title_ar` varchar(255),
@@ -324,9 +375,11 @@ CREATE TABLE `products` (
     KEY `idx_active` (`is_active`),
     KEY `idx_featured` (`is_featured`),
     KEY `idx_trending` (`is_trending`),
+    KEY `idx_seasonal` (`is_seasonal`),
     KEY `idx_rating` (`rating`),
     KEY `idx_price_range` (`min_price`, `max_price`),
     KEY `idx_popularity` (`popularity_score`),
+    KEY `idx_view_count` (`view_count`),
     FULLTEXT KEY `idx_search` (`name_en`, `name_ar`, `description_en`, `description_ar`),
     CONSTRAINT `fk_product_brand` FOREIGN KEY (`brand_id`) REFERENCES `brands` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_product_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE
@@ -346,6 +399,41 @@ CREATE TABLE `product_alternatives` (
     KEY `fk_product_alternative` (`alternative_product_id`),
     CONSTRAINT `fk_product_main` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_product_alternative` FOREIGN KEY (`alternative_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول المنتجات الموسمية والعروض
+CREATE TABLE `seasonal_products` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `product_id` int NOT NULL,
+    `season_type` enum('black_friday', 'cyber_monday', 'christmas', 'new_year', 'ramadan', 'eid', 'summer_sale', 'winter_sale', 'back_to_school') NOT NULL,
+    `start_date` date NOT NULL,
+    `end_date` date NOT NULL,
+    `discount_percentage` decimal(5,2),
+    `special_price` decimal(12,2),
+    `is_active` boolean DEFAULT TRUE,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_season_type` (`season_type`),
+    KEY `idx_dates` (`start_date`, `end_date`),
+    KEY `idx_active` (`is_active`),
+    CONSTRAINT `fk_seasonal_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول المنتجات المشاهدة مؤخراً
+CREATE TABLE `recently_viewed_products` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int,
+    `session_id` varchar(255),
+    `product_id` int NOT NULL,
+    `viewed_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_session_id` (`session_id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_viewed_at` (`viewed_at`),
+    CONSTRAINT `fk_viewed_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_viewed_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- جدول أسعار المنتجات في المتاجر
@@ -415,13 +503,15 @@ CREATE TABLE `user_wishlists` (
     CONSTRAINT `fk_wishlist_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- جدول مقارنة المنتجات
+-- جدول مقارنة المنتجات (يدعم حتى 4 منتجات)
 CREATE TABLE `user_comparisons` (
     `id` int NOT NULL AUTO_INCREMENT,
     `user_id` int,
     `session_id` varchar(255),
     `name` varchar(255),
     `products` json NOT NULL,
+    `comparison_criteria` json,
+    `analysis_result` json, -- نتائج التحليل الذكي (أفضل اقتصاد، أفضل قيمة، أقوى أداء)
     `is_public` boolean DEFAULT FALSE,
     `share_token` varchar(100) UNIQUE,
     `expires_at` timestamp NULL,
@@ -510,6 +600,22 @@ CREATE TABLE `product_qa` (
     CONSTRAINT `fk_qa_answerer` FOREIGN KEY (`answered_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول تصويت للأجهزة المفضلة
+CREATE TABLE `product_votes` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `product_id` int NOT NULL,
+    `vote_type` enum('favorite', 'recommended', 'best_value', 'most_innovative') NOT NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_user_product_vote` (`user_id`, `product_id`, `vote_type`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_vote_type` (`vote_type`),
+    CONSTRAINT `fk_vote_user_product` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_vote_product_user` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
 -- 7. الإشعارات وتنبيهات الأسعار
 -- ===================================
@@ -518,14 +624,14 @@ CREATE TABLE `product_qa` (
 CREATE TABLE `notifications` (
     `id` int NOT NULL AUTO_INCREMENT,
     `user_id` int NOT NULL,
-    `type` enum('price_drop', 'stock_available', 'deal_alert', 'review_response', 'qa_answer', 'system', 'marketing') NOT NULL,
+    `type` enum('price_drop', 'stock_available', 'deal_alert', 'review_response', 'qa_answer', 'system', 'marketing', 'seasonal_offer', 'new_product') NOT NULL,
     `title` varchar(255) NOT NULL,
     `message` text NOT NULL,
     `data` json,
     `action_url` varchar(500),
     `is_read` boolean DEFAULT FALSE,
     `is_sent` boolean DEFAULT FALSE,
-    `send_via` json DEFAULT ('["web"]'), -- web, email, push
+    `send_via` json DEFAULT ('["web"]'), -- web, email, push, sms
     `scheduled_at` timestamp NULL,
     `sent_at` timestamp NULL,
     `read_at` timestamp NULL,
@@ -565,8 +671,107 @@ CREATE TABLE `price_alerts` (
     CONSTRAINT `fk_alert_currency` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول Budget Planner - توصيات حسب الميزانية
+CREATE TABLE `budget_plans` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `budget_amount` decimal(12,2) NOT NULL,
+    `currency_id` int NOT NULL,
+    `category_id` int,
+    `requirements` json,
+    `recommended_products` json,
+    `is_active` boolean DEFAULT TRUE,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_category_id` (`category_id`),
+    KEY `fk_budget_currency` (`currency_id`),
+    CONSTRAINT `fk_budget_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_budget_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_budget_currency` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
--- 8. المحتوى والمقالات
+-- 8. التسوق والعربة والطلبات (للمواقع التي تدعم الشراء)
+-- ===================================
+
+-- جدول عربة التسوق
+CREATE TABLE `shopping_cart` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int,
+    `session_id` varchar(255),
+    `product_id` int NOT NULL,
+    `store_id` int NOT NULL,
+    `quantity` int DEFAULT 1,
+    `price` decimal(12,2) NOT NULL,
+    `currency_id` int NOT NULL,
+    `added_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_session_id` (`session_id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_store_id` (`store_id`),
+    KEY `fk_cart_currency` (`currency_id`),
+    CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_cart_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_cart_currency` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول الطلبات
+CREATE TABLE `orders` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `order_number` varchar(50) NOT NULL UNIQUE,
+    `user_id` int,
+    `guest_email` varchar(255),
+    `status` enum('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
+    `total_amount` decimal(12,2) NOT NULL,
+    `currency_id` int NOT NULL,
+    `payment_method` enum('credit_card', 'paypal', 'bank_transfer', 'cash_on_delivery', 'crypto') NOT NULL,
+    `payment_status` enum('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
+    `shipping_address` json NOT NULL,
+    `billing_address` json NOT NULL,
+    `order_notes` text,
+    `tracking_number` varchar(100),
+    `shipped_at` timestamp NULL,
+    `delivered_at` timestamp NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `order_number` (`order_number`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_payment_status` (`payment_status`),
+    KEY `idx_created_at` (`created_at`),
+    KEY `fk_order_currency` (`currency_id`),
+    CONSTRAINT `fk_order_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_order_currency` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول تفاصيل الطلبات
+CREATE TABLE `order_items` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `order_id` int NOT NULL,
+    `product_id` int NOT NULL,
+    `store_id` int NOT NULL,
+    `quantity` int NOT NULL,
+    `unit_price` decimal(12,2) NOT NULL,
+    `total_price` decimal(12,2) NOT NULL,
+    `product_snapshot` json, -- حفظ معلومات المنتج وقت الطلب
+    PRIMARY KEY (`id`),
+    KEY `idx_order_id` (`order_id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_store_id` (`store_id`),
+    CONSTRAINT `fk_item_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_item_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
+    CONSTRAINT `fk_item_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===================================
+-- 9. المحتوى والمقالات
 -- ===================================
 
 -- جدول المقالات والمدونة
@@ -582,7 +787,7 @@ CREATE TABLE `articles` (
     `featured_image` varchar(500),
     `gallery_images` json,
     `author_id` int NOT NULL,
-    `category` enum('news', 'review', 'guide', 'comparison', 'tech_tips', 'deals') NOT NULL,
+    `category` enum('news', 'review', 'guide', 'comparison', 'tech_tips', 'deals', 'buying_guide') NOT NULL,
     `tags` json,
     `related_products` json,
     `reading_time` int, -- minutes
@@ -632,8 +837,28 @@ CREATE TABLE `article_comments` (
     CONSTRAINT `fk_comment_parent` FOREIGN KEY (`parent_id`) REFERENCES `article_comments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول شهادات العملاء
+CREATE TABLE `customer_testimonials` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `position` varchar(255),
+    `company` varchar(255),
+    `testimonial_text` text NOT NULL,
+    `rating` tinyint CHECK (`rating` >= 1 AND `rating` <= 5),
+    `photo_url` varchar(500),
+    `is_featured` boolean DEFAULT FALSE,
+    `is_approved` boolean DEFAULT FALSE,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_featured` (`is_featured`),
+    KEY `idx_approved` (`is_approved`),
+    CONSTRAINT `fk_testimonial_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
--- 9. إعدادات النظام والتخصيص
+-- 10. إعدادات النظام والتخصيص
 -- ===================================
 
 -- جدول إعدادات النظام
@@ -674,8 +899,30 @@ CREATE TABLE `static_pages` (
     KEY `idx_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول النشرة البريدية
+CREATE TABLE `newsletter_subscribers` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `email` varchar(255) NOT NULL UNIQUE,
+    `name` varchar(255),
+    `user_id` int,
+    `preferred_language_id` int DEFAULT 1,
+    `subscription_types` json, -- deals, new_products, articles, etc.
+    `is_active` boolean DEFAULT TRUE,
+    `verification_token` varchar(255),
+    `verified_at` timestamp NULL,
+    `unsubscribed_at` timestamp NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `email` (`email`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_active` (`is_active`),
+    KEY `fk_newsletter_language` (`preferred_language_id`),
+    CONSTRAINT `fk_newsletter_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_newsletter_language` FOREIGN KEY (`preferred_language_id`) REFERENCES `languages` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
--- 10. جداول إضافية للميزات المتقدمة
+-- 11. جداول إضافية للميزات المتقدمة
 -- ===================================
 
 -- جدول العروض والتخفيضات
@@ -685,7 +932,7 @@ CREATE TABLE `deals` (
     `title_ar` varchar(255) NOT NULL,
     `description_en` text,
     `description_ar` text,
-    `deal_type` enum('percentage', 'fixed_amount', 'buy_one_get_one', 'bundle') NOT NULL,
+    `deal_type` enum('percentage', 'fixed_amount', 'buy_one_get_one', 'bundle', 'flash_sale') NOT NULL,
     `discount_value` decimal(10,2),
     `min_purchase_amount` decimal(12,2),
     `product_ids` json,
@@ -698,12 +945,14 @@ CREATE TABLE `deals` (
     `is_active` boolean DEFAULT TRUE,
     `usage_count` int DEFAULT 0,
     `max_usage` int,
+    `view_count` int DEFAULT 0,
     `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_active` (`is_active`),
     KEY `idx_featured` (`is_featured`),
-    KEY `idx_dates` (`start_date`, `end_date`)
+    KEY `idx_dates` (`start_date`, `end_date`),
+    KEY `idx_deal_type` (`deal_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- جدول كوبونات الخصم
@@ -740,6 +989,7 @@ CREATE TABLE `coupon_usage` (
     `id` int NOT NULL AUTO_INCREMENT,
     `coupon_id` int NOT NULL,
     `user_id` int NOT NULL,
+    `order_id` int,
     `discount_amount` decimal(10,2) NOT NULL,
     `original_amount` decimal(12,2) NOT NULL,
     `final_amount` decimal(12,2) NOT NULL,
@@ -747,9 +997,58 @@ CREATE TABLE `coupon_usage` (
     PRIMARY KEY (`id`),
     KEY `idx_coupon_id` (`coupon_id`),
     KEY `idx_user_id` (`user_id`),
+    KEY `idx_order_id` (`order_id`),
     CONSTRAINT `fk_usage_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_usage_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_usage_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_usage_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول برنامج الشراكة (Affiliate Program)
+CREATE TABLE `affiliate_partners` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `affiliate_code` varchar(50) NOT NULL UNIQUE,
+    `commission_rate` decimal(5,2) DEFAULT 5.00,
+    `total_earnings` decimal(12,2) DEFAULT 0.00,
+    `total_clicks` int DEFAULT 0,
+    `total_conversions` int DEFAULT 0,
+    `payment_method` enum('paypal', 'bank_transfer', 'crypto') DEFAULT 'paypal',
+    `payment_details` json,
+    `is_active` boolean DEFAULT TRUE,
+    `approved_at` timestamp NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `affiliate_code` (`affiliate_code`),
+    UNIQUE KEY `user_id` (`user_id`),
+    KEY `idx_active` (`is_active`),
+    CONSTRAINT `fk_affiliate_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول تتبع الشراكة
+CREATE TABLE `affiliate_tracking` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `affiliate_id` int NOT NULL,
+    `visitor_ip` varchar(45),
+    `visitor_user_agent` text,
+    `referrer_url` varchar(1000),
+    `landing_page` varchar(1000),
+    `click_date` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `conversion_date` timestamp NULL,
+    `order_id` int,
+    `commission_amount` decimal(10,2) DEFAULT 0.00,
+    `is_paid` boolean DEFAULT FALSE,
+    PRIMARY KEY (`id`),
+    KEY `idx_affiliate_id` (`affiliate_id`),
+    KEY `idx_order_id` (`order_id`),
+    KEY `idx_click_date` (`click_date`),
+    CONSTRAINT `fk_tracking_affiliate` FOREIGN KEY (`affiliate_id`) REFERENCES `affiliate_partners` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_tracking_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===================================
+-- 12. التحليلات والإحصائيات
+-- ===================================
 
 -- جدول إحصائيات الموقع
 CREATE TABLE `site_analytics` (
@@ -777,13 +1076,35 @@ CREATE TABLE `search_analytics` (
     `session_id` varchar(255),
     `ip_address` varchar(45),
     `user_agent` text,
+    `search_type` enum('text', 'voice', 'image') DEFAULT 'text',
     `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_query` (`query`),
     KEY `idx_user_id` (`user_id`),
+    KEY `idx_search_type` (`search_type`),
     KEY `idx_created_at` (`created_at`),
     CONSTRAINT `fk_search_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول تخصيص الصفحة الرئيسية
+CREATE TABLE `user_homepage_preferences` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `preferred_categories` json,
+    `preferred_brands` json,
+    `price_range_preferences` json,
+    `layout_preferences` json,
+    `content_preferences` json, -- news, deals, reviews, etc.
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `user_id` (`user_id`),
+    CONSTRAINT `fk_homepage_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===================================
+-- 13. النسخ الاحتياطية والتكامل
+-- ===================================
 
 -- جدول نسخ احتياطية للبيانات
 CREATE TABLE `data_backups` (
@@ -801,8 +1122,51 @@ CREATE TABLE `data_backups` (
     KEY `idx_started_at` (`started_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول تكامل السوشيال ميديا
+CREATE TABLE `social_media_integration` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `platform` enum('facebook', 'twitter', 'instagram', 'youtube', 'tiktok', 'linkedin') NOT NULL,
+    `account_id` varchar(255),
+    `access_token` text,
+    `refresh_token` text,
+    `account_info` json,
+    `is_active` boolean DEFAULT TRUE,
+    `last_sync` timestamp NULL,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_platform` (`platform`),
+    KEY `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- جدول منشورات السوشيال ميديا
+CREATE TABLE `social_media_posts` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `integration_id` int NOT NULL,
+    `product_id` int,
+    `article_id` int,
+    `post_type` enum('product_share', 'article_share', 'deal_promotion', 'custom') NOT NULL,
+    `content` text NOT NULL,
+    `media_urls` json,
+    `hashtags` json,
+    `post_id` varchar(255), -- ID from social platform
+    `scheduled_at` timestamp NULL,
+    `posted_at` timestamp NULL,
+    `engagement_stats` json,
+    `is_published` boolean DEFAULT FALSE,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_integration_id` (`integration_id`),
+    KEY `idx_product_id` (`product_id`),
+    KEY `idx_article_id` (`article_id`),
+    KEY `idx_scheduled_at` (`scheduled_at`),
+    CONSTRAINT `fk_post_integration` FOREIGN KEY (`integration_id`) REFERENCES `social_media_integration` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_post_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_post_article` FOREIGN KEY (`article_id`) REFERENCES `articles` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===================================
--- 11. الفهارس المحسنة للأداء
+-- 14. الفهارس المحسنة للأداء
 -- ===================================
 
 -- فهارس إضافية للبحث والفلترة
@@ -810,6 +1174,7 @@ CREATE INDEX idx_products_featured_active ON products(is_featured, is_active, cr
 CREATE INDEX idx_products_trending_rating ON products(is_trending, rating DESC, total_reviews DESC);
 CREATE INDEX idx_products_category_brand ON products(category_id, brand_id, is_active);
 CREATE INDEX idx_products_price_range_category ON products(category_id, min_price, max_price);
+CREATE INDEX idx_products_seasonal_active ON products(is_seasonal, is_active, created_at);
 
 CREATE INDEX idx_prices_product_store_updated ON product_prices(product_id, store_id, last_updated);
 CREATE INDEX idx_prices_store_stock ON product_prices(store_id, stock_status, price);
@@ -822,6 +1187,11 @@ CREATE INDEX idx_wishlists_user_created ON user_wishlists(user_id, created_at);
 
 CREATE INDEX idx_articles_published_featured ON articles(is_published, is_featured, published_at);
 CREATE INDEX idx_articles_category_published ON articles(category, is_published, published_at);
+
+CREATE INDEX idx_orders_user_status ON orders(user_id, status, created_at);
+CREATE INDEX idx_orders_status_date ON orders(status, created_at);
+
+CREATE INDEX idx_loyalty_user_type ON loyalty_points_history(user_id, transaction_type, created_at);
 
 SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
