@@ -6,7 +6,7 @@
 USE `coprra_db`;
 
 -- ===================================
--- 1. بيانات اللغات الأساسية (أكبر 15 لغة عالمية)
+-- 1. بيانات اللغات الأساسية (أكبر 20 لغة عالمية)
 -- ===================================
 
 INSERT INTO `languages` (`code`, `name`, `native_name`, `flag`, `is_rtl`, `is_active`, `sort_order`) VALUES
@@ -24,7 +24,12 @@ INSERT INTO `languages` (`code`, `name`, `native_name`, `flag`, `is_rtl`, `is_ac
 ('ko', 'Korean', '한국어', '🇰🇷', FALSE, TRUE, 12),
 ('tr', 'Turkish', 'Türkçe', '🇹🇷', FALSE, TRUE, 13),
 ('it', 'Italian', 'Italiano', '🇮🇹', FALSE, TRUE, 14),
-('vi', 'Vietnamese', 'Tiếng Việt', '🇻🇳', FALSE, TRUE, 15);
+('vi', 'Vietnamese', 'Tiếng Việt', '🇻🇳', FALSE, TRUE, 15),
+('ur', 'Urdu', 'اردو', '🇵🇰', TRUE, TRUE, 16),
+('fa', 'Persian', 'فارسی', '🇮🇷', TRUE, TRUE, 17),
+('ms', 'Malay', 'Bahasa Melayu', '🇲🇾', FALSE, TRUE, 18),
+('th', 'Thai', 'ไทย', '🇹🇭', FALSE, TRUE, 19),
+('nl', 'Dutch', 'Nederlands', '🇳🇱', FALSE, TRUE, 20);
 
 -- ===================================
 -- 2. بيانات العملات الأساسية

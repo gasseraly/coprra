@@ -19,7 +19,7 @@ USE `coprra_db`;
 -- 1. الجداول الأساسية للنظام
 -- ===================================
 
--- جدول اللغات المدعومة (أكبر 15 لغة عالمية)
+-- جدول اللغات المدعومة (أكبر 20 لغة عالمية)
 CREATE TABLE `languages` (
     `id` int NOT NULL AUTO_INCREMENT,
     `code` varchar(10) NOT NULL,
