@@ -1,0 +1,117 @@
+{
+  "timestamp": "2025-08-10T12:30:19.280Z",
+  "summary": {
+    "totalTests": 8,
+    "passed": 2,
+    "failed": 4,
+    "warnings": 1,
+    "errors": 0,
+    "severityBreakdown": {
+      "critical": 0,
+      "high": 3,
+      "medium": 2,
+      "low": 1,
+      "info": 2
+    }
+  },
+  "results": [
+    {
+      "testName": "SQL Injection Protection",
+      "status": "passed",
+      "severity": "info",
+      "message": "Found 3 files with SQL injection protection",
+      "recommendation": "Continue using prepared statements and input validation",
+      "timestamp": "2025-08-10T12:30:19.261Z"
+    },
+    {
+      "testName": "XSS Protection",
+      "status": "failed",
+      "severity": "high",
+      "message": "Found 3 potential XSS vulnerabilities: /home/ubuntu/coprra-website/src/components/ui/chart.jsx: Uses dangerouslySetInnerHTML, /home/ubuntu/coprra-website/src/pages/Privacy.jsx: Uses dangerouslySetInnerHTML, /home/ubuntu/coprra-website/src/pages/Terms.jsx: Uses dangerouslySetInnerHTML",
+      "recommendation": "Always escape user input before output and avoid dangerouslySetInnerHTML",
+      "timestamp": "2025-08-10T12:30:19.277Z"
+    },
+    {
+      "testName": "Authentication Security",
+      "status": "failed",
+      "severity": "high",
+      "message": "Found 2 authentication security issues: /home/ubuntu/coprra-website/api/auth.php: No rate limiting detected, /home/ubuntu/coprra-website/src/pages/Login.jsx: May store sensitive data in localStorage",
+      "recommendation": "Implement proper password hashing, session management, and rate limiting",
+      "timestamp": "2025-08-10T12:30:19.278Z"
+    },
+    {
+      "testName": "File Upload Security",
+      "status": "info",
+      "severity": "low",
+      "message": "No file upload functionality detected",
+      "recommendation": "If file uploads are added, ensure proper validation",
+      "timestamp": "2025-08-10T12:30:19.278Z"
+    },
+    {
+      "testName": "HTTPS Enforcement",
+      "status": "failed",
+      "severity": "high",
+      "message": "HTTPS enforcement not detected",
+      "recommendation": "Configure server to redirect HTTP to HTTPS and use HSTS headers",
+      "timestamp": "2025-08-10T12:30:19.279Z"
+    },
+    {
+      "testName": "Security Headers",
+      "status": "failed",
+      "severity": "medium",
+      "message": "Missing security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Content-Security-Policy",
+      "recommendation": "Add missing security headers to prevent common attacks",
+      "timestamp": "2025-08-10T12:30:19.279Z"
+    },
+    {
+      "testName": "Database Security",
+      "status": "passed",
+      "severity": "info",
+      "message": "Found 2 security features: Database: Has proper indexing, Database: Uses foreign key constraints",
+      "recommendation": "Continue following database security best practices",
+      "timestamp": "2025-08-10T12:30:19.279Z"
+    },
+    {
+      "testName": "Session Security",
+      "status": "warning",
+      "severity": "medium",
+      "message": "No session handling detected",
+      "recommendation": "If sessions are used, ensure proper security configuration",
+      "timestamp": "2025-08-10T12:30:19.280Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "test": "SQL Injection Protection",
+      "recommendation": "Continue using prepared statements and input validation"
+    },
+    {
+      "test": "XSS Protection",
+      "recommendation": "Always escape user input before output and avoid dangerouslySetInnerHTML"
+    },
+    {
+      "test": "Authentication Security",
+      "recommendation": "Implement proper password hashing, session management, and rate limiting"
+    },
+    {
+      "test": "File Upload Security",
+      "recommendation": "If file uploads are added, ensure proper validation"
+    },
+    {
+      "test": "HTTPS Enforcement",
+      "recommendation": "Configure server to redirect HTTP to HTTPS and use HSTS headers"
+    },
+    {
+      "test": "Security Headers",
+      "recommendation": "Add missing security headers to prevent common attacks"
+    },
+    {
+      "test": "Database Security",
+      "recommendation": "Continue following database security best practices"
+    },
+    {
+      "test": "Session Security",
+      "recommendation": "If sessions are used, ensure proper security configuration"
+    }
+  ]
+}
