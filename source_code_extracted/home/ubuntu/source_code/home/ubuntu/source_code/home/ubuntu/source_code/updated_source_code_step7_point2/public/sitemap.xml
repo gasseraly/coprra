@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <!-- الصفحة الرئيسية -->
+  <url>
+    <loc>https://coprra.com/</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/" />
+  </url>
+  
+  <!-- صفحة المنتجات -->
+  <url>
+    <loc>https://coprra.com/products</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/products" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/products" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/products" />
+  </url>
+  
+  <!-- صفحة المدونة -->
+  <url>
+    <loc>https://coprra.com/blog</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog" />
+  </url>
+  
+  <!-- صفحة المقارنة -->
+  <url>
+    <loc>https://coprra.com/compare</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/compare" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/compare" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/compare" />
+  </url>
+  
+  <!-- صفحة تسجيل الدخول -->
+  <url>
+    <loc>https://coprra.com/login</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/login" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/login" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/login" />
+  </url>
+  
+  <!-- صفحة سياسة الخصوصية -->
+  <url>
+    <loc>https://coprra.com/privacy</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/privacy" />
+  </url>
+  
+  <!-- صفحة الشروط والأحكام -->
+  <url>
+    <loc>https://coprra.com/terms</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/terms" />
+  </url>
+  
+  <!-- مقالات المدونة -->
+  <url>
+    <loc>https://coprra.com/blog/best-smartphones-2024</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/best-smartphones-2024" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/best-smartphones-2024" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/best-smartphones-2024" />
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/blog/tv-buying-guide-2024</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/tv-buying-guide-2024" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/tv-buying-guide-2024" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/tv-buying-guide-2024" />
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/blog/smart-shopping-tips</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/smart-shopping-tips" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/smart-shopping-tips" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/smart-shopping-tips" />
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/blog/laptop-comparison-2024</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/laptop-comparison-2024" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/laptop-comparison-2024" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/laptop-comparison-2024" />
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/blog/tech-deals-august-2024</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/tech-deals-august-2024" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/tech-deals-august-2024" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/tech-deals-august-2024" />
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/blog/gaming-setup-guide</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://coprra.com/ar/blog/gaming-setup-guide" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://coprra.com/en/blog/gaming-setup-guide" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://coprra.com/blog/gaming-setup-guide" />
+  </url>
+  
+  <!-- فئات المنتجات -->
+  <url>
+    <loc>https://coprra.com/products?category=smartphones</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?category=laptops</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?category=tablets</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?category=headphones</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?category=cameras</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?category=gaming</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- العلامات التجارية -->
+  <url>
+    <loc>https://coprra.com/products?brand=apple</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?brand=samsung</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?brand=google</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?brand=oneplus</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?brand=xiaomi</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://coprra.com/products?brand=sony</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+</urlset>
+

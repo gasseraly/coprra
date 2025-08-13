@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-08-10T12:25:12.656Z",
+  "summary": {
+    "total": 6,
+    "passed": 3,
+    "failed": 3,
+    "successRate": "50.00%"
+  },
+  "details": [
+    {
+      "name": "Database Structure Test",
+      "status": "failed",
+      "message": "Required table 'reviews' not found in database"
+    },
+    {
+      "name": "API Structure Test",
+      "status": "failed",
+      "message": "API file not found in any expected location"
+    },
+    {
+      "name": "Frontend Structure Test",
+      "status": "passed",
+      "message": "All required files and dependencies found"
+    },
+    {
+      "name": "Configuration Files Test",
+      "status": "passed",
+      "message": "All configuration files found and properly configured"
+    },
+    {
+      "name": "Security Features Test",
+      "status": "failed",
+      "message": "API file not found for security testing"
+    },
+    {
+      "name": "Responsive Design Test",
+      "status": "passed",
+      "message": "Responsive design framework properly configured"
+    }
+  ]
+}

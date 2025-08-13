@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-08-10T12:24:05.686Z",
+  "summary": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "successRate": "33.33%"
+  },
+  "details": [
+    {
+      "name": "Database Structure Test",
+      "status": "failed",
+      "message": "Required table 'users' not found in database"
+    },
+    {
+      "name": "API Structure Test",
+      "status": "failed",
+      "message": "API file not found"
+    },
+    {
+      "name": "Frontend Structure Test",
+      "status": "passed",
+      "message": "All required files and dependencies found"
+    },
+    {
+      "name": "Configuration Files Test",
+      "status": "passed",
+      "message": "All configuration files found and properly configured"
+    },
+    {
+      "name": "Security Features Test",
+      "status": "failed",
+      "message": "ENOENT: no such file or directory, open '/home/ubuntu/coprra-website/api.php'"
+    },
+    {
+      "name": "Responsive Design Test",
+      "status": "failed",
+      "message": "Tailwind CSS not properly configured"
+    }
+  ]
+}
